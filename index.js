@@ -22,17 +22,36 @@ const ACTIVITY_LOGS_TABLE = 'ActivityLogs';
 app.post('/transactions', async (req, res) => {
   const transaction = req.body;
 
+    // Create activity log
+    const activityLog = {
+        'log-id': uuidv4(),
+        'timestamp': new Date().toISOString(),
+        'action': 'Transaction Created',
+        'details': `Transaction ID: ${transaction['transaction-id']}`
+      };
+
   // Generate a unique transaction ID
   transaction['transaction-id'] = uuidv4();
 
-  const params = {
+  const TransactionParams = {
     TableName: TRANSACTION_TABLE,
     Item: transaction
   };
 
+  const ActivityLogParams = {
+    TableName: ACTIVITY_LOGS_TABLE,
+    Item: activityLog
+  };
+
   try {
-    await dynamodb.put(params).promise();
+    // Put transactions into Transactions Table
+    await dynamodb.put(TransactionParams).promise();
+
+    // Put activity logs into ActivityLogs Table
+    await dynamodb.put(ActivityLogParams).promise();
+
     res.status(201).json({ message: 'Transaction stored successfully', transaction });
+    
   } catch (error) {
     res.status(500).json({ message: 'Failed to store transaction', error });
   }
